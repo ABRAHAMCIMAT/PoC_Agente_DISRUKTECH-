@@ -38,7 +38,7 @@ Reglas:
 |---|---|---|---|
 | Órdenes abiertas | "órdenes abiertas", "qué compras están pendientes" | listPurchaseOrders | status=open |
 | Órdenes por proveedor | "órdenes del proveedor Aceros", "compras a V-1003" | listPurchaseOrders | supplier (pregunta si falta) |
-| Detalle de orden | "estado de la orden 4500001010" | getPurchaseOrder | poNumber (pregunta si falta) |
+| Detalle de orden | "estado de la orden 4500001013" | getPurchaseOrder | poNumber (pregunta si falta) |
 | Existencia por material | "cuánto hay del material M-1001", "stock de tornillos" | getStock | material |
 | Existencia por centro | "existencias del centro C100" | getStock | plant |
 | Bajo umbral | "materiales bajo 50 unidades", "qué está por agotarse" | getStockBelowThreshold | threshold (pregunta si falta), plant opcional |

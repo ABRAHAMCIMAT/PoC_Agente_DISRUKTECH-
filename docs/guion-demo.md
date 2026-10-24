@@ -5,8 +5,8 @@ Datos 100 % ficticios. Duración sugerida: 15 min. Antes de empezar, ejecutar `s
 | # | Consulta | Frase de ejemplo | Resultado esperado |
 |---|---|---|---|
 | C1 | Órdenes abiertas | "¿Qué órdenes de compra están abiertas?" | 10 de 18 con proveedor, estado e importe |
-| C2 | Por proveedor | "Muéstrame las órdenes del proveedor Aceros" | Dos proveedores coinciden: el agente ofrece elegir |
-| C3 | Detalle | "Dame el estado de la orden 4500001010" | Estado y posiciones con cantidades y recibido |
+| C2 | Por proveedor | "Muéstrame las órdenes abiertas del proveedor Aceros" | 2 órdenes de Aceros del Norte Demo. Con "todas las órdenes cerradas de Aceros" coinciden dos proveedores y el agente lo indica |
+| C3 | Detalle | "Dame el estado de la orden 4500001013" | Estado PARCIAL y posiciones con cantidades pedida y recibida |
 | I1 | Por material | "¿Cuánto hay del material M-1001?" | Existencia por centro, con unidad |
 | I2 | Por centro | "Existencias del centro C100" | Hasta 10 materiales, con el total |
 | I3 | Bajo umbral | "Materiales con menos de 100 unidades" | Lista de materiales; sin número, el agente pregunta el umbral |
