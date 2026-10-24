@@ -1,0 +1,179 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "DISRUKTECH PoC - API de Compras e Inventarios (DEMO)",
+    "version": "1.0.0",
+    "description": "API REST de SOLO LECTURA con datos ficticios (DEMO) de compras e inventarios. Estructuras inspiradas en SAP, sin equivalencia certificada."
+  },
+  "servers": [{ "url": "https://REEMPLAZAR-HOST-API" }],
+  "security": [{ "ApiKeyAuth": [] }],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Estado del servicio",
+        "security": [],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string", "example": "ok" } } } } } } }
+      }
+    },
+    "/purchase-orders": {
+      "get": {
+        "operationId": "listPurchaseOrders",
+        "summary": "Lista ordenes de compra. Usar para: ordenes abiertas (status=open) o ordenes de un proveedor (supplier).",
+        "description": "Intenciones C1 (ordenes abiertas) y C2 (ordenes por proveedor). 'open' incluye estados ABIERTA y PARCIAL.",
+        "parameters": [
+          { "name": "status", "in": "query", "required": false, "description": "Filtro de estado. 'open' = ABIERTA o PARCIAL.", "schema": { "type": "string", "enum": ["open", "ABIERTA", "PARCIAL", "CERRADA", "BLOQUEADA"], "default": "open" } },
+          { "name": "supplier", "in": "query", "required": false, "description": "ID de proveedor (ej. V-1001) o parte del nombre, sin distinguir mayusculas.", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "required": false, "description": "Maximo de filas devueltas.", "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "Listado (puede ser vacio)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PurchaseOrderList" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/purchase-orders/{poNumber}": {
+      "get": {
+        "operationId": "getPurchaseOrder",
+        "summary": "Detalle y estado de una orden de compra con sus posiciones.",
+        "description": "Intencion C3.",
+        "parameters": [
+          { "name": "poNumber", "in": "path", "required": true, "description": "Numero de orden, ej. 4500001001.", "schema": { "type": "string", "pattern": "^45[0-9]{8}$" } }
+        ],
+        "responses": {
+          "200": { "description": "Orden encontrada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PurchaseOrderDetail" } } } },
+          "404": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/stock": {
+      "get": {
+        "operationId": "getStock",
+        "summary": "Existencias por material o por centro. Requiere al menos uno de los dos filtros.",
+        "description": "Intenciones I1 (por material) e I2 (por centro).",
+        "parameters": [
+          { "name": "material", "in": "query", "required": false, "description": "ID de material (ej. M-1001) o parte de la descripcion.", "schema": { "type": "string" } },
+          { "name": "plant", "in": "query", "required": false, "description": "ID de centro (ej. C100).", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "Existencias (puede ser vacio)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StockList" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/stock/below-threshold": {
+      "get": {
+        "operationId": "getStockBelowThreshold",
+        "summary": "Materiales cuya existencia total esta por debajo de un umbral indicado.",
+        "description": "Intencion I3. El umbral es obligatorio; no hay valor por defecto.",
+        "parameters": [
+          { "name": "threshold", "in": "query", "required": true, "description": "Umbral de cantidad (>= 0).", "schema": { "type": "number", "minimum": 0 } },
+          { "name": "plant", "in": "query", "required": false, "description": "Limitar a un centro.", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "Materiales bajo umbral (puede ser vacio)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BelowThresholdList" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": { "ApiKeyAuth": { "type": "apiKey", "in": "header", "name": "X-API-Key" } },
+    "responses": {
+      "Error": { "description": "Error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string", "enum": ["BAD_REQUEST", "UNAUTHORIZED", "NOT_FOUND", "METHOD_NOT_ALLOWED", "INTERNAL"] },
+          "message": { "type": "string", "description": "Mensaje legible para el usuario, en espanol." }
+        }
+      },
+      "PurchaseOrderSummary": {
+        "type": "object",
+        "properties": {
+          "poNumber": { "type": "string", "description": "Alias de EBELN", "example": "4500001001" },
+          "supplierId": { "type": "string", "description": "Alias de LIFNR", "example": "V-1001" },
+          "supplierName": { "type": "string", "example": "Aceros Demo S.A." },
+          "orderDate": { "type": "string", "format": "date" },
+          "status": { "type": "string", "enum": ["ABIERTA", "PARCIAL", "CERRADA", "BLOQUEADA"] },
+          "currency": { "type": "string", "example": "USD" },
+          "totalAmount": { "type": "number" }
+        }
+      },
+      "PurchaseOrderList": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer", "description": "Total de coincidencias (puede exceder items)." },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/PurchaseOrderSummary" } }
+        }
+      },
+      "PurchaseOrderItem": {
+        "type": "object",
+        "properties": {
+          "line": { "type": "integer" },
+          "materialId": { "type": "string", "description": "Alias de MATNR" },
+          "materialDescription": { "type": "string" },
+          "plantId": { "type": "string", "description": "Alias de WERKS" },
+          "quantity": { "type": "number" },
+          "receivedQuantity": { "type": "number" },
+          "uom": { "type": "string", "example": "UN" },
+          "netPrice": { "type": "number" },
+          "deliveryDate": { "type": "string", "format": "date" }
+        }
+      },
+      "PurchaseOrderDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/PurchaseOrderSummary" },
+          { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/PurchaseOrderItem" } } } }
+        ]
+      },
+      "StockRow": {
+        "type": "object",
+        "properties": {
+          "materialId": { "type": "string" },
+          "materialDescription": { "type": "string" },
+          "plantId": { "type": "string" },
+          "plantName": { "type": "string" },
+          "quantity": { "type": "number" },
+          "uom": { "type": "string" }
+        }
+      },
+      "StockList": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/StockRow" } }
+        }
+      },
+      "BelowThresholdRow": {
+        "type": "object",
+        "properties": {
+          "materialId": { "type": "string" },
+          "materialDescription": { "type": "string" },
+          "totalQuantity": { "type": "number" },
+          "uom": { "type": "string" },
+          "threshold": { "type": "number" }
+        }
+      },
+      "BelowThresholdList": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "threshold": { "type": "number" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/BelowThresholdRow" } }
+        }
+      }
+    }
+  }
+}
