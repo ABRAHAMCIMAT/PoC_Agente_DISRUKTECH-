@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "inc0" / "openapi.json"
 OUT = ROOT / "docs" / "powerplatform" / "apiDefinition.swagger.json"
 MAX_SUMMARY = 80
-HOST_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?(:[0-9]{1,5})?$")
+HOST_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?(:\d{1,5})?$")
 
 
 def short(text: str) -> str:
@@ -112,18 +112,24 @@ def validate(sw: dict) -> list:
     return errs + find_bad_refs(sw, set(sw["definitions"]))
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--host", default="REEMPLAZAR-HOST-API")
-    host = ap.parse_args().host
+def render(host: str) -> str:
+    """Genera el JSON del Swagger 2.0 (texto). Lanza SystemExit si no valida."""
     if not HOST_RE.match(host):
         raise SystemExit(f"Host invalido: {host!r} (use solo el nombre de host, sin https://)")
     sw = convert(json.loads(SRC.read_text(encoding="utf-8")), host)
     problems = validate(sw)
     if problems:
         raise SystemExit("\n".join(problems))
-    OUT.write_text(json.dumps(sw, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"OK -> {OUT.relative_to(ROOT)} ({len(sw['paths'])} rutas)")
+    return json.dumps(sw, indent=2, ensure_ascii=False) + "\n"
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--host", default="REEMPLAZAR-HOST-API")
+    text = render(ap.parse_args().host)
+    # OUT es una constante del repositorio; ningun argumento ni contenido del contrato define la ruta.
+    OUT.write_text(text, encoding="utf-8")  # NOSONAR
+    print(f"OK -> {OUT.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
