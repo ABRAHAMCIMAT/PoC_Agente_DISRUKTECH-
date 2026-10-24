@@ -1,0 +1,14 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> seleccionar este repo.
+# La BD demo (sintetica) se genera al construir la imagen (ver api/Dockerfile).
+services:
+  - type: web
+    name: poc-disruktech-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: API_KEY
+        generateValue: true   # Render genera la clave; copiela desde el Dashboard al crear la conexion del conector

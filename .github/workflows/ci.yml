@@ -1,0 +1,36 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: api/requirements.lock
+      - name: Instalar dependencias (lock con hashes, solo wheels)
+        run: pip install --require-hashes --only-binary :all: -r requirements.lock
+      - name: Pruebas
+        run: python -m pytest -q
+      - name: Ensayo de demo (smoke) contra la API en ejecucion
+        env:
+          API_KEY: ci-key
+          DB_PATH: ${{ runner.temp }}/ci.db
+          API_URL: http://127.0.0.1:8000
+        run: |
+          python -m app.seed --reset
+          python -m uvicorn app.main:app --port 8000 &
+          for i in $(seq 1 20); do curl -fs $API_URL/health && break; sleep 1; done
+          python ../scripts/smoke_demo.py

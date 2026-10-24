@@ -1,0 +1,19 @@
+{
+  "properties": {
+    "connectionParameters": {
+      "api_key": {
+        "type": "securestring",
+        "uiDefinition": {
+          "displayName": "API Key",
+          "description": "Clave de la API DEMO de DISRUKTECH (cabecera X-API-Key)",
+          "tooltip": "Solicite la clave al equipo de DISRUKTECH",
+          "constraints": { "tabIndex": 2, "clearText": false, "required": "true" }
+        }
+      }
+    },
+    "iconBrandColor": "#007EE5",
+    "capabilities": [],
+    "publisher": "DISRUKTECH",
+    "stackOwner": "DISRUKTECH"
+  }
+}

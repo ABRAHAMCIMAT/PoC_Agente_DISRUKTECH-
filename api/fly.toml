@@ -1,0 +1,27 @@
+# Fly.io: ejecutar desde la carpeta api/ ->  fly launch --no-deploy --copy-config  ;  fly secrets set API_KEY=<clave> ;  fly deploy
+app = "poc-disruktech-api"        # cambiar si el nombre ya esta tomado
+primary_region = "bog"            # elegir la region mas cercana (fly platform regions)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8000"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/health"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

@@ -1,10 +1,11 @@
 import os
+import tempfile
 
 import pytest
 from fastapi.testclient import TestClient
 
 os.environ["API_KEY"] = "test-key"
-os.environ["DB_PATH"] = "/tmp/opencode/test_demo.db"
+os.environ["DB_PATH"] = os.path.join(tempfile.gettempdir(), "test_demo.db")
 
 from app.main import app  # noqa: E402
 from app.seed import seed  # noqa: E402
