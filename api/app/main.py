@@ -120,3 +120,78 @@ def get_purchase_order(po_number: str):
     finally:
         conn.close()
     return {**dict(head), "items": [dict(r) for r in items]}
+
+
+# ---------- inventarios (incremento 2): I1, I2, I3 ----------
+def _plant_or_404(conn, plant: str) -> dict:
+    row = conn.execute(
+        "SELECT plant_id, name FROM plant WHERE UPPER(plant_id) = UPPER(?)", (plant,)
+    ).fetchone()
+    if not row:
+        fail(404, "NOT_FOUND", f"No encontre el centro {plant}.")
+    return dict(row)
+
+
+@app.get("/stock", dependencies=[Depends(require_key)])
+def get_stock(
+    material: str | None = Query(None, min_length=1),
+    plant: str | None = Query(None, min_length=1),
+    limit: int = Query(10, ge=1, le=50),
+):
+    """I1 (por material) e I2 (por centro). Requiere al menos uno de los filtros."""
+    if not material and not plant:
+        fail(400, "BAD_REQUEST", "Indique al menos un filtro: material o plant.")
+    conn = connect()
+    try:
+        where, params = [], []
+        if plant:
+            where.append("s.plant_id = ?")
+            params.append(_plant_or_404(conn, plant)["plant_id"])
+        if material:
+            found = conn.execute(
+                "SELECT material_id FROM material WHERE UPPER(material_id) = UPPER(?) "
+                "OR UPPER(description) LIKE UPPER(?)", (material, f"%{material}%")).fetchall()
+            if not found:
+                fail(404, "NOT_FOUND", f"No encontre el material {material}.")
+            ids = [r["material_id"] for r in found]
+            where.append(f"s.material_id IN ({','.join('?' * len(ids))})")
+            params += ids
+        rows = [dict(r) for r in conn.execute(
+            f"""SELECT s.material_id AS materialId, m.description AS materialDescription,
+                       s.plant_id AS plantId, p.name AS plantName, s.quantity AS quantity, m.uom AS uom
+                FROM stock s JOIN material m ON m.material_id = s.material_id
+                JOIN plant p ON p.plant_id = s.plant_id
+                WHERE {' AND '.join(where)}
+                ORDER BY s.quantity DESC, s.material_id, s.plant_id""", params)]
+    finally:
+        conn.close()
+    return {"total": len(rows), "items": rows[:limit]}
+
+
+@app.get("/stock/below-threshold", dependencies=[Depends(require_key)])
+def get_stock_below_threshold(
+    threshold: float = Query(..., ge=0),
+    plant: str | None = Query(None, min_length=1),
+    limit: int = Query(10, ge=1, le=50),
+):
+    """I3. Materiales con existencia total (o del centro indicado) menor al umbral. Umbral obligatorio."""
+    conn = connect()
+    try:
+        params: list = []
+        where = ""
+        if plant:
+            where = "WHERE s.plant_id = ?"
+            params.append(_plant_or_404(conn, plant)["plant_id"])
+        rows = [dict(r) for r in conn.execute(
+            f"""SELECT s.material_id AS materialId, m.description AS materialDescription,
+                       SUM(s.quantity) AS totalQuantity, m.uom AS uom
+                FROM stock s JOIN material m ON m.material_id = s.material_id
+                {where}
+                GROUP BY s.material_id
+                HAVING SUM(s.quantity) < ?
+                ORDER BY totalQuantity ASC, s.material_id""", params + [threshold])]
+    finally:
+        conn.close()
+    for r in rows:
+        r["threshold"] = threshold
+    return {"total": len(rows), "threshold": threshold, "items": rows[:limit]}
