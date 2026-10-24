@@ -16,7 +16,7 @@ Basado en el SOW v1.0 (20/oct/2026). Sin SAP real, sin escritura, sin produccion
 ## Ejecucion local
 ```bash
 cd api
-pip install -r requirements.txt
+pip install --require-hashes --only-binary :all: -r requirements.lock   # o: pip install -r requirements.txt
 python -m app.seed --reset          # crea demo.db con datos sinteticos reproducibles
 API_KEY=cambia-esto uvicorn app.main:app --port 8000
 curl -H "X-API-Key: cambia-esto" "localhost:8000/purchase-orders?status=open"
@@ -33,3 +33,5 @@ python -m pytest -q
 | 2 | API inventarios (I1-I3) con pruebas (29 en total) | Hecho en local; falta agente (requiere tenant) |
 | 3 | Contrato, Dockerfile, ensayo automatico, guion y config del agente | Hecho; falta ejecutar en el tenant |
 | 4 | Despliegue gratuito, CI y conector Power Platform | Hecho; sin validar en tenant ni hosting reales |
+
+Dependencias: `requirements.in` / `requirements-runtime.in` son las fuentes; los `.lock` llevan versiones y hashes (regenerar con `pip-compile --generate-hashes`).

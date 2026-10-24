@@ -19,10 +19,18 @@ def test_swagger_comitido_esta_sincronizado_con_openapi():
 
 def test_restricciones_power_platform():
     assert conv.validate(COMMITTED) == []
-    assert COMMITTED["swagger"] == "2.0" and COMMITTED["schemes"] == ["https"]
+    assert COMMITTED["swagger"] == "2.0"
+    assert COMMITTED["schemes"] == ["https"]
     assert COMMITTED["securityDefinitions"]["api_key"]["name"] == "X-API-Key"
-    assert {o["operationId"] for p in COMMITTED["paths"].values() for o in p.values()} == \
-           {"getHealth", "listPurchaseOrders", "getPurchaseOrder", "getStock", "getStockBelowThreshold"}
+    ids = {o["operationId"] for p in COMMITTED["paths"].values() for o in p.values()}
+    assert ids == {"getHealth", "listPurchaseOrders", "getPurchaseOrder", "getStock", "getStockBelowThreshold"}
+
+
+def test_host_invalido_se_rechaza():
+    for bad in ("https://x.com", "../x", "a b", ""):
+        assert not conv.HOST_RE.match(bad), bad
+    assert conv.HOST_RE.match("mi-api.onrender.com")
+    assert conv.HOST_RE.match("localhost:8000")
 
 
 def test_apiproperties_coincide_con_security_definition():

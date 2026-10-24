@@ -19,8 +19,9 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
-          cache-dependency-path: api/requirements.txt
-      - run: pip install -r requirements.txt
+          cache-dependency-path: api/requirements.lock
+      - name: Instalar dependencias (lock con hashes, solo wheels)
+        run: pip install --require-hashes --only-binary :all: -r requirements.lock
       - name: Pruebas
         run: python -m pytest -q
       - name: Ensayo de demo (smoke) contra la API en ejecucion
