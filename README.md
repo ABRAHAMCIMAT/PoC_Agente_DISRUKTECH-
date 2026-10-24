@@ -4,6 +4,9 @@ Asistente de compras e inventarios en Microsoft Copilot Studio sobre una API RES
 Basado en el SOW v1.0 (20/oct/2026). Sin SAP real, sin escritura, sin produccion.
 
 ## Estructura
+- `docs/` configuración del agente de Copilot Studio y guion de demo
+- `scripts/smoke_demo.py` ensayo automático de las 6 consultas + 2 errores
+- `api/Dockerfile` imagen lista para hosting (inyectar `API_KEY` como secreto)
 - `inc0/` alcance, condiciones de inicio, contrato `openapi.json` y `schema.sql` (incremento 0)
 - `api/` API FastAPI + seed SQLite + pruebas (incremento 1: compras C1-C3; incremento 2: inventarios I1-I3)
 
@@ -25,4 +28,4 @@ python -m pytest -q
 | 0 | Alcance, OpenAPI v1, esquema | Hecho (pendiente aprobacion de Valtre) |
 | 1 | Seed completo + API compras (C1-C3) + API key + pruebas | Hecho en local; falta agente (requiere tenant) |
 | 2 | API inventarios (I1-I3) con pruebas (29 en total) | Hecho en local; falta agente (requiere tenant) |
-| 3 | Errores, guion y ensayo | Pendiente |
+| 3 | Contrato, Dockerfile, ensayo automatico, guion y config del agente | Hecho; falta ejecutar en el tenant |
